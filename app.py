@@ -1,34 +1,51 @@
 import streamlit as st
+import replicate
 import google.generativeai as genai
 
-st.set_page_config(page_title="My Personal AI", layout="centered")
+st.set_page_config(page_title="My Private AI Assistant", layout="wide")
 st.title("🤖 My Private AI Assistant")
 
-# Sidebar for API Key & Settings
+# Sidebar for API Keys
 with st.sidebar:
-    st.header("Admin Control")
-    api_key = st.text_input("Enter Gemini API Key:", type="password")
+    st.header("🔑 API Settings")
+    gemini_key = st.text_input("Gemini API Key (Chat ke liye):", type="password")
+    replicate_key = st.text_input("Replicate API Key (Images ke liye):", type="password")
 
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    # Image Generator Module
-    st.subheader("🎨 Unlimited Image Generator")
-    img_prompt = st.text_input("Enter image prompt:")
-    if st.button("Generate Image"):
-        if img_prompt:
-            encoded_prompt = img_prompt.replace(" ", "%20")
-            img_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1080&nologo=true"
-            st.image(img_url, caption=img_prompt)
-    
-    st.divider()
-    
-    # Chat Module
-    st.subheader("💬 AI Chat & Code Agent")
-    user_input = st.text_area("Aapka Aadesh (Instructions):")
-    if st.button("Send Instruction"):
-        response = model.generate_content(user_input)
-        st.write(response.text)
-else:
-    st.warning("Kripya sidebar me apni Gemini API Key darj karein.")
+st.header("🎨 Open Image Generator (Flux)")
+image_prompt = st.text_input("Enter image prompt:")
+
+if st.button("Generate Image"):
+    if not replicate_key:
+        st.error("Kripya sidebar me Replicate API Key darj karein.")
+    elif not image_prompt:
+        st.warning("Kripya koi prompt type karein.")
+    else:
+        try:
+            with st.spinner("Image ban rahi hai..."):
+                client = replicate.Client(api_token=replicate_key)
+                output = client.run(
+                    "black-forest-labs/flux-schnell",
+                    input={"prompt": image_prompt}
+                )
+                st.image(output[0], caption=image_prompt)
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+st.markdown("---")
+
+st.header("💬 AI Chat Agent")
+user_instruction = st.text_area("Aapka Aadesh (Instructions):")
+
+if st.button("Send Instruction"):
+    if not gemini_key:
+        st.error("Kripya sidebar me Gemini API Key darj karein.")
+    elif not user_instruction:
+        st.warning("Kripya koi instruction likhein.")
+    else:
+        try:
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(user_instruction)
+            st.write(response.text)
+        except Exception as e:
+            st.error(f"Error: {e}")
