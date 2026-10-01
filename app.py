@@ -1,33 +1,29 @@
 import streamlit as st
-import replicate
+import urllib.parse
 import google.generativeai as genai
 
-st.set_page_config(page_title="My Private AI Assistant", layout="wide")
-st.title("🤖 My Private AI Assistant")
+st.set_page_config(page_title="My AI Generator", layout="wide")
+st.title("🤖 My Private AI Generator")
 
-# Sidebar for API Keys
+# Sidebar for Gemini API Key (Chat ke liye)
 with st.sidebar:
     st.header("🔑 API Settings")
     gemini_key = st.text_input("Gemini API Key (Chat ke liye):", type="password")
-    replicate_key = st.text_input("Replicate API Key (Images ke liye):", type="password")
 
-st.header("🎨 Open Image Generator (Flux)")
+st.header("🎨 AI Image Generator")
 image_prompt = st.text_input("Enter image prompt:")
 
 if st.button("Generate Image"):
-    if not replicate_key:
-        st.error("Kripya sidebar me Replicate API Key darj karein.")
-    elif not image_prompt:
+    if not image_prompt:
         st.warning("Kripya koi prompt type karein.")
     else:
         try:
             with st.spinner("Image ban rahi hai..."):
-                client = replicate.Client(api_token=replicate_key)
-                output = client.run(
-                    "black-forest-labs/flux-schnell",
-                    input={"prompt": image_prompt}
-                )
-                st.image(output[0], caption=image_prompt)
+                # Clean and encode prompt text
+                clean_prompt = urllib.parse.quote(image_prompt)
+                # Unlimited & Free High-Quality Image URL
+                image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width=1024&height=1024&nologo=true"
+                st.image(image_url, caption=image_prompt, use_container_width=True)
         except Exception as e:
             st.error(f"Error: {e}")
 
